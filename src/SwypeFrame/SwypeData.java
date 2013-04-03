@@ -34,6 +34,21 @@ public class SwypeData implements Iterable<SwypePoint> {
 	
 	@Override
 	public Iterator<SwypePoint> iterator() {
-		return null;//points; 
+		return new Iterator<SwypePoint>() {
+			int current=0;
+			@Override
+			public boolean hasNext() {
+				return current<points.length;
+			}
+			@Override
+			public SwypePoint next() {
+				return points[current++];
+			}
+			@Override
+			public void remove() {
+				throw new NullPointerException();
+			}
+			
+		};
 	}
 }
