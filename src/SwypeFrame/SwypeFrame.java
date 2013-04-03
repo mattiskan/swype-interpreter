@@ -16,7 +16,7 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 public class SwypeFrame extends JFrame {
 	BufferedImage keyBoard;
-	String word = "";
+	SwypeData data;
 	public static void main(String[] args) {
 		new SwypeFrame();
 	}
@@ -31,23 +31,25 @@ public class SwypeFrame extends JFrame {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		//getContentPane().add(new DrawArea());
-
+		try {
+			data = new SwypeData(new File("../files/axel_0.json"));
+			getContentPane().add(new DrawArea());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		setVisible(true);
 		setResizable(false);
 	}
 
 	private class DrawArea extends JComponent {
-		Point2D[] points;
-		public DrawArea(Point2D[] points) {
-			this.points = points;
+		public DrawArea() {
 		}
 		@Override
 		public void paintComponent(Graphics g) {
 			Graphics2D g2 = (Graphics2D)g;
 			g2.drawImage(keyBoard, 0, 0, null);
 			g2.setColor(Color.WHITE);
-			g2.drawString(word, 0, 0);
+			g2.drawString(data.getWord(), 0, 0);
 		}
 		
 		

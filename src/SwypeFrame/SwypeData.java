@@ -1,11 +1,12 @@
 package SwypeFrame;
 
 import java.io.*;
+import java.util.Iterator;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 
-public class SwypeData {
+public class SwypeData implements Iterable<SwypePoint> {
 	public String word;
 	public SwypePoint[] points;
 	public SwypeData(File f) throws IOException {
@@ -22,5 +23,17 @@ public class SwypeData {
 			long time = p.get("time").getAsLong();
 			points[i] = new SwypePoint(x, y, time);
 		}
+	}
+	public String getWord() {
+		return word;
+	}
+	
+	public SwypePoint[] getPoints() {
+		return points;
+	}
+	
+	@Override
+	public Iterator<SwypePoint> iterator() {
+		return null;//points; 
 	}
 }
