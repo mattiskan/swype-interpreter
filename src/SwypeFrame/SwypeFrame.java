@@ -31,7 +31,7 @@ public class SwypeFrame extends JFrame {
 		sf.setVisible(true);
 	}
 	public SwypeFrame(File json) {
-		super("Swype!");
+		super(json.getName());
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
 		try {
@@ -88,13 +88,15 @@ public class SwypeFrame extends JFrame {
 				last = p;
 				//g2.fillRect((int)p.x, (int)p.y, 2, 2);
 			}
-			g2.setColor(Color.GREEN);
 			for (int i=0; i<mark.size(); i++) {
 				Point2D p = mark.get(i);
 				Character c = markChar.get(i);
-				g2.fillOval((int)p.getX()-3, (int)p.getY()-3, 6, 6);
+				g2.setColor(Color.GREEN);
+				g2.fillOval((int)p.getX()-7, (int)p.getY()-7, 14, 14);
+				
 				if (c!=null) {
-					g2.drawString(c.toString(), (int)p.getX(), (int)p.getY());
+					g2.setColor(Color.BLACK);
+					g2.drawString(c.toString(), (int)p.getX()-2, (int)p.getY()+4);
 				}
 			}
 		}

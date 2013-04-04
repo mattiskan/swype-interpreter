@@ -48,7 +48,6 @@ public class SwypeData implements Iterable<SwypePoint> {
 			public void remove() {
 				throw new NullPointerException();
 			}
-			
 		};
 	}
 }

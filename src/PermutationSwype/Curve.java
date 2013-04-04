@@ -2,74 +2,106 @@ package PermutationSwype;
 
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import SwypeFrame.*;
 
 public class Curve {
+	public static void main(String[] args) {
+		File[] dir = new File("files").listFiles(new FileFilter() {
+			@Override
+			public boolean accept(File pathname) {
+				return pathname.getName().endsWith(".json");
+			}
+		});
+		for(File file : dir){
+			System.out.println(file.getPath());
+			new Curve(file);
+		}	
+	}
+	
 	SwypePoint[] curveData;
 	ArrayList<Turn> turns = new ArrayList<Turn>();
 	
+	SwypeFrame graphics;	
 	
-	
-	
-	public Curve(String wordFile){
+	public Curve(File wordFile){
 		try {
-			curveData = new SwypeData(new File("files/"+wordFile)).getPoints();
+			curveData = new SwypeData(wordFile).getPoints();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
+		graphics = new SwypeFrame(wordFile);
 		
+		findTurns();
+		
+		graphics.setVisible(true);		
 	}
 	
 	private void findTurns(){
-		final int TURN_RADIUS = 100;
-		final int TURN_THRESHOLD = 0;
+		final int TURN_RADIUS = 50;
+		final double TURN_THRESHOLD = Math.PI / 1.4;
 		
 		int a = 0;
-		int c = 1;
+		int b = nPixlesAhead(0, TURN_RADIUS);
+		int c = getNextPoint(a, b);
 		
-		while(true){
-			//suitable distance between a and b:
-			while(curveData[a].distanceTo(curveData[c]) < TURN_RADIUS){
-				c++;
-				if(c > curveData.length)
-					return;
+		while(c != -1){
+			double angle = calcAngle(a, b, c);
+			if(angle < TURN_THRESHOLD){
+				turns.add(new Turn(a, c, angle));
+				graphics.markChar(curveData[b],'x');
 			}
-			double sharpness = calculateTurn(a, c);
-			if( sharpness> TURN_THRESHOLD){
-				//it's a corner!
-				turns.add(new Turn(a, c, sharpness));
-			}
-			a = c;
+			a = b;
+			b = c;
+			c = getNextPoint(a, b);
+		}
+	}
+	
+	private int getNextPoint(int a, int b){
+		double goal = curveDist(a, b);
+		
+	    int c = b-1;
+		double current = 0;
+		
+		do {
+			if(c+2 >= curveData.length)
+				return -1;
 			c++;
-		}		
+			current += curveDist(c, c+1);
+		} while(goal - current > 0);
+		return c+1;
 	}
 	
-	
-	
-	/**
-	 *  Uppskatta hur mycket de tre punkterna "svänger"
-	 *  Mer info:
-	 *  https://www.mathworks.com/matlabcentral/answers/57194
-	 */
-	private double calculateTurn(int a, int c ){
-		double x1 = curveData[a].x;
-		double y1 = curveData[a].y;
+	private int nPixlesAhead(int point, int n){
+		double sum = 0;
+		int i;
+		for(i = point; sum <= n && i < curveData.length; i++){
+			sum += curveDist(i, i+1);
+		}
 		
-		int b = a+c/2;
-		double x2 = curveData[b].x;
-		double y2 = curveData[b].y;
-		
-		double x3 = curveData[c].x;
-		double y3 = curveData[c].y;
-		
-		return 2*Math.abs((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1)) / 
-				Math.sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))*((x3-x1)*(x3-x1)+(y3-y1)*(y3-y1))*((x3-x2)*(x3-x2)+(y3-y2)*(y3-y2)));
+		return i;
+	}
+
+	private double curveDist(int from, int to){
+		double sum=0;
+		for(int i = from; i < to; i++){
+			sum += curveData[i].distance(curveData[i+1]);
+		}
+		return sum;
 	}
 	
+	private double calcAngle(int a, int b, int c){
+		double ab = curveData[a].distance(curveData[b]);
+		double bc = curveData[b].distance(curveData[c]);
+		double ac = curveData[a].distance(curveData[c]);
+		
+		//cossinussatsen 0-π		
+		return Math.acos((ab*ab + bc*bc -ac*ac)/(2*ab*bc)) % Math.PI;
+	}
 	
 }
 
