@@ -27,7 +27,7 @@ public class SwypeFrame extends JFrame {
 	List<Character> markChar = new ArrayList<Character>();
 	public static void main(String[] args) {
 		SwypeFrame sf = new SwypeFrame(new File("files/slow_0.json"));
-		sf.markChar(new Point2D.Double(5.0, 5.0), 'a');
+		sf.markPoint(new Point2D.Double(5.0, 5.0), 'a');
 		sf.setVisible(true);
 	}
 	public SwypeFrame(File json) {
@@ -53,13 +53,12 @@ public class SwypeFrame extends JFrame {
 		}
 	}
 	
+	private int defaultChar = 1;
 	public void markPoint(Point2D point) {
-		mark.add(point);
-		markChar.add(null);
-		repaint();
+		markPoint(point, Character.forDigit(defaultChar++, 10));
 	}
 
-	public void markChar(Point2D point, char c) {
+	public void markPoint(Point2D point, char c) {
 		mark.add(point);
 		markChar.add(c);
 		repaint();

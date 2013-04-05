@@ -7,8 +7,10 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 
 public class SwypeData implements Iterable<SwypePoint> {
-	public String word;
-	public SwypePoint[] points;
+	private String word;
+	private SwypePoint[] points;
+	private double[] distances;
+	
 	public SwypeData(File f) throws IOException {
 		JsonParser parser = new JsonParser();
 		JsonReader reader = new JsonReader(new InputStreamReader(new BufferedInputStream(new FileInputStream(f))));
@@ -16,20 +18,41 @@ public class SwypeData implements Iterable<SwypePoint> {
 		word = container.get("word").getAsString();
 		JsonArray pointArray = container.get("data").getAsJsonArray();
 		points = new SwypePoint[pointArray.size()];
+		distances = new double[pointArray.size()];
 		for (int i=0; i<pointArray.size(); i++) {
 			JsonObject p = pointArray.get(i).getAsJsonObject();
 			double x = p.get("x").getAsDouble();
 			double y = p.get("y").getAsDouble();
 			long time = p.get("time").getAsLong();
 			points[i] = new SwypePoint(x, y, time);
+			if(i != 0){
+				distances[i] = distances[i-1] + points[i-1].distance(points[i]);
+				//System.out.println("Distance:" + distances[i]);
+			}
 		}
 	}
+	
+	public double curveDist(int from, int to){
+		return distances[to] - distances[from];
+	}
+	public double linearDist(int from, int to){
+		return points[from].distance(points[to]);
+	}
+	
 	public String getWord() {
 		return word;
 	}
 	
+	public SwypePoint getPoint(int i){
+		return points[i];
+	}
+	
 	public SwypePoint[] getPoints() {
 		return points;
+	}
+	
+	public int size(){
+		return points.length;
 	}
 	
 	@Override
