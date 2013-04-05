@@ -31,6 +31,22 @@ class TrieNode implements Iterable<TrieNode> {
 	public void addWord(String word) {
 		addWord(0, word);
 	}
+	public boolean hasWord() {
+		return word!=null;
+	}
+	public String getWord() {
+		return word;
+	}
+	public char getChar() {
+		return c;
+	}
+	
+	public boolean hasChild(char letter) {
+		return children[letter-'a']!=null;
+	}
+	public TrieNode getChild(char letter) {
+		return children[letter-'a'];
+	}
 	
 	private void addWord(int letter, String word) {
 		char cc = word.charAt(letter);
