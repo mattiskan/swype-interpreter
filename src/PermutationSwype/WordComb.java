@@ -13,8 +13,9 @@ public class WordComb implements Comparable<WordComb>{
 	Turn[] turns;
 	PriorityLetterHolder[] turnLetters;
 //	LinkedList<Character>[] addedSegmentLetters;
-	TreeSet<PriorityLetterHolder> segments;
+	PriorityLetterHolder[] segments;
 	PriorityLetterHolder bestPriority;
+	double bestPriorityValue;
 	double penalty = 1.0;
 	
 	final String word;
@@ -23,83 +24,116 @@ public class WordComb implements Comparable<WordComb>{
 		this.data = swypeData;
 		this.turns = turns;
 		turnLetters = new PriorityLetterHolder[turns.length];
-//		addedSegmentLetters = (LinkedList<Character>[]) new LinkedList[turns.length-1];
-//		for(int i = 0; i < addedSegmentLetters.length; i++){
-//			addedSegmentLetters[i] = new LinkedList<Character>();
-//		}
 		
-		segments =  new TreeSet<PriorityLetterHolder>();
+		segments =  new PriorityLetterHolder[turns.length-1];
 		
 		populateTurnLetters();
-		bestPriority = turnLetters[0];
-		populateSegments();	
+
+		populateSegments();
 		
+		bestPriority = turnLetters[0];
 		updateBestPriority();
 		
-		this.word = getNextWord();
+		this.word = generateWord();
 		//while(r());
 	}
 	
-	private WordComb(PriorityLetterHolder[] turnLetters, TreeSet<PriorityLetterHolder> segments, double penalty, String word){
+	private WordComb(PriorityLetterHolder[] turnLetters, PriorityLetterHolder[] segments, double penalty, String word){
 		this.word = word;
 		this.turnLetters=turnLetters;
 		this.segments=segments;
 //		this.addedSegmentLetters = addedSegmentLetters;
-		bestPriority = turnLetters[0];
-		updateBestPriority();
-		
-		
 		this.penalty = penalty;
-		
 	}
 	
-	public String getNextWord(){
+	public String generateWord(){
+		return generateWord(turnLetters, segments);
+	}
+	
+	public String generateWord(PriorityLetterHolder[] turnLetters, PriorityLetterHolder[] segments){
 		StringBuilder sb = new StringBuilder();
-		Iterator<PriorityLetterHolder> it = segments.iterator();
 		for(int i = 0; i < turnLetters.length; i++){
-			sb.append(turnLetters[i].peekNextLetter());
+			sb.append(turnLetters[i].peekCurrentLetter());
 			
 			if(i+1 == turnLetters.length)
 				break;
 
-			PriorityLetterHolder p = it.next();
 			
-			if(p.peekNextLetter() != ' ')
-				sb.append(p.peekNextLetter());
-			else
-				sb.append('-');
+			sb.append(segments[i].peekCurrentLetter());
 			
 		}
 		//System.out.println(sb.toString());
 		return sb.toString();
 	}
 	
+
+	
 	private void updateBestPriority() {
+		bestPriority = turnLetters[0];
+		
+		int count = 0;
+		double avg = 0;
 		for(PriorityLetterHolder p : turnLetters){
+			if(p.isDead){
+				bestPriorityValue = 0;
+				return;
+			}
+				
 			if(bestPriority.peekNextPriority() < p.peekNextPriority()){
 				bestPriority = p;
 			}
+			//System.out.println("Turnletter " + p.peekNextLetter() + ": " + p.peekNextPriority());
+			avg+= p.peekNextPriority();
+			count++;
 		}
 		
-		if(bestPriority.peekNextPriority() < segments.first().peekNextPriority()){
-			bestPriority = segments.first();
-		}
+		for(PriorityLetterHolder p : segments){
+			if(p.isDead){
+				bestPriorityValue = 0;
+				return;
+			}
+			
+			if(bestPriority.peekNextPriority() < p.peekNextPriority()){
+				bestPriority = p;
+			}
+			
+			avg += p.peekNextPriority();
+			count++;
+			//System.out.println("Segment " + p.peekNextLetter() + ": " + p.peekNextPriority());
+		}		
+		
+		bestPriorityValue = avg / count;
 	}
+	
+	public void showValues() {
+		System.out.print(word);
+		for(int i = 0; i < turnLetters.length; i++){
+			PriorityLetterHolder p = turnLetters[i];
+			System.out.print("\nT:   '" + p.peekCurrentLetter()+"' -> '"+p.peekNextLetter() + "' : " + p.peekNextPriority());
+			if(p == bestPriority)
+				System.out.print(" <-- next");
+			if(i < segments.length){
+				PriorityLetterHolder p2  = segments[i];
+				System.out.print("\nS:   '" + p2.peekCurrentLetter()+"' -> '"+p2.peekNextLetter() + "' : " + p2.peekNextPriority());
+				if(p2 == bestPriority)
+					System.out.print(" <-- next");
+			}
+		}
+		System.out.println();
+	}
+	
 
 	private void populateSegments(){
-		for(int i = 0; i < turns.length-1; i++){
+		for(int i = 0; i < segments.length; i++){
 			PriorityLetterHolder p = populateSegment(i);
-			
-			if(segments.contains(p))
-				System.out.println("ERROR :/");
-			else 
-				segments.add(p);
+			segments[i] = p;
 		}
 	}
 	
 	private void populateTurnLetters() {
 		for(int i = 0; i < turnLetters.length; i++){
-			turnLetters[i] = new PriorityLetterHolder(getCharDistances(data.getPoint(turns[i].index)), -1);
+			double[] chars = getCharDistances(data.getPoint(turns[i].index));
+			turnLetters[i] = new PriorityLetterHolder(chars , -1);
 		}
 	}
 
@@ -114,6 +148,11 @@ public class WordComb implements Comparable<WordComb>{
 				}
 			}
 		}
+//		if(segment == 0){
+//			for(int i = 0; i < charDistances.length; i++){
+//				System.out.println(CharacterMap.posToChar(i) + " " + charDistances[i]);
+//			}
+//		}
 		return new PriorityLetterHolder(charDistances, segment);
 	}
 	
@@ -132,27 +171,55 @@ public class WordComb implements Comparable<WordComb>{
 	
 	@SuppressWarnings("unchecked")
 	public WordComb nextPerm() {
+		PriorityLetterHolder[] turnLetterCopy = (PriorityLetterHolder[])ObjectCopy.copy(turnLetters);
+		PriorityLetterHolder[] segmentCopy = (PriorityLetterHolder[]) ObjectCopy.copy(segments);
 		
 		if(bestPriority.segmentIndex != -1){
-			segments.remove(bestPriority);
-			bestPriority.pollNextLetter();
-			segments.add(bestPriority);
 			
-			return new WordComb((PriorityLetterHolder[])ObjectCopy.copy(turnLetters), (TreeSet<PriorityLetterHolder>)ObjectCopy.copy(segments), penalty*1.2, getNextWord());
+			
+			int i;
+			for(i =0; i < segments.length; i++) {
+				if(segments[i] == bestPriority)
+					break;
+			}
+			segmentCopy[i].poll();
+			
+
+			bestPriority.strikeAhead();		
+			
+			WordComb result = new WordComb(turnLetterCopy, segmentCopy, penalty, generateWord(turnLetterCopy, segmentCopy));
+			//penalty -= 0.05;
+			
+			return result;
 		} else {
-			bestPriority.pollNextLetter();
-			return new WordComb((PriorityLetterHolder[])ObjectCopy.copy(turnLetters), (TreeSet<PriorityLetterHolder>)ObjectCopy.copy(segments), penalty, getNextWord());
+			
+			int i;
+			for(i =0; i < turnLetters.length; i++) {
+				if(turnLetters[i] == bestPriority)
+					break;
+			}
+			turnLetterCopy[i].poll();
+			bestPriority.strikeAhead();
+			
+			
+			System.out.println("my result:" + priority());
+			WordComb result = new WordComb(turnLetterCopy , segmentCopy, penalty, generateWord(turnLetterCopy, segmentCopy));
+			System.out.println("your:     "+ result.priority());
+			//penalty -= 0.05;
+			return result;
 		}
 	}
 	
 	public double priority() {
 		updateBestPriority();
-		return bestPriority.peekNextPriority() * penalty;
+		return bestPriorityValue * penalty;
 	}
 	
 	@Override
 	public int compareTo(WordComb o) {
-		return  priority() < o.priority()? -1:1;
+		return  priority() < o.priority()? 1:-1;
 	}
+
+
 
 }
