@@ -6653,6 +6653,7 @@ hedningar
 hedningarna
 hedrar
 hedras
+hej
 hejar
 hejat
 hejdlös
