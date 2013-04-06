@@ -1,10 +1,7 @@
 package PermutationSwype;
 
-import java.awt.geom.Point2D;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.*;
+import java.util.*;
 
 import SwypeFrame.*;
 
@@ -25,21 +22,29 @@ public class Curve {
 	SwypeData curveData;
 	ArrayList<Turn> turns = new ArrayList<Turn>();
 	
-	SwypeFrame graphics;	
+	SwypeFrame graphics;
+	
+	private boolean debug;
 	
 	public Curve(File wordFile){
-		try {
-			curveData = new SwypeData(wordFile);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		curveData = new SwypeData(wordFile);
 		
+		debug = true;		
 		graphics = new SwypeFrame(wordFile);
 		
-		findTurns(50, Math.PI/1.3);
 		
+		findTurns();
 		
 		graphics.setVisible(true);		
+	}
+	
+	public Curve(SwypeData curveData){
+		this.curveData = curveData;
+		findTurns();
+	}
+	
+	private void findTurns(){
+		findTurns(50, Math.PI/1.3);
 	}
 	
 	private void findTurns(int radius, double threshold){		
@@ -47,20 +52,24 @@ public class Curve {
 		int b = nPixlesAhead(0, radius);
 		int c = getNextPoint(a, b);
 		
+		turns.add(new Turn(0, curveData, 0));
+		
 		while(c != -1){
 			double angle = calcAngle(a, b, c);
 			if(angle < threshold){
 				b = improveTurn(a,b,c);
-				turns.add(new Turn(a, c, angle));
-				graphics.markPoint(curveData.getPoint(b));
-				//graphics.markPoint(curveData.getPoint(b), 'a');
+				turns.add(new Turn(b, curveData, angle));
+				if(debug){
+					graphics.markPoint(curveData.getPoint(b));
+				}
 				b=nPixlesAhead(b, 30);
-				//graphics.markPoint(curveData.getPoint(b), 'b');
 			}
 			a = b;
 			b = nPixlesAhead(b, radius);
 			c = getNextPoint(a, b);
 		}
+		
+		turns.add(new Turn(curveData.size()-1, curveData, 0));
 	}
 	
 	private int improveTurn(int a, int b, int c){
@@ -143,19 +152,9 @@ public class Curve {
 		//cossinussatsen 0-π		
 		return Math.acos((ab*ab + bc*bc -ac*ac)/(2*ab*bc)) % Math.PI;
 	}
-	
-}
 
-
-class Turn {
-	int a, b, c;
-	double sharpness;
-	public Turn(int a, int c, double sharpness) {
-		this.a = a;
-		this.b = a+c/2;
-		this.c = b;
-		
-		this.sharpness = sharpness;
+	public Turn[] getTurns() {
+		return turns.toArray(new Turn[0]);
 	}
 	
 }

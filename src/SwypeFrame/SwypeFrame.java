@@ -46,11 +46,7 @@ public class SwypeFrame extends JFrame {
 	}
 	
 	public void loadJsonFile(File json) {
-		try {
-			data = new SwypeData(json);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		data = new SwypeData(json);
 	}
 	
 	private int defaultChar = 1;
