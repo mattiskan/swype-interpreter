@@ -30,14 +30,15 @@ public class Interpreter {
 		Curve curve = new Curve(sd);
 				
 		WordComb current = new WordComb(curve.curveData, curve.getTurns());
-		while(!TestingWordList.contains(current.getCurrentWord())){
-			vardump();
+		System.err.println(current.word);
+		while(!TestingWordList.contains(current.getNextWord())){
 			executionOrder.add(current.nextPerm());
 			executionOrder.add(current);
+			vardump();
 			current = executionOrder.poll();
 			sc.next();
 		}
-		System.out.println("Found word: " + current.getCurrentWord());
+		System.out.println("Found word: " + current.getNextWord());
 	}
 	
 	private void vardump(){
@@ -45,7 +46,7 @@ public class Interpreter {
 		PriorityQueue<WordComb> temp = new PriorityQueue<WordComb>();
 		while (!executionOrder.isEmpty()) {
 			WordComb wc =  executionOrder.poll();
-			System.out.println(i++ + ": "+ wc.getCurrentWord() + " - " + wc.priority());
+			System.out.println(i++ + ": "+ wc.word + " - " + wc.priority() + ", " + wc.penalty);
 			temp.add(wc);
 		}
 		executionOrder = temp;

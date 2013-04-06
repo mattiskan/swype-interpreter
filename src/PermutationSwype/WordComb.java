@@ -15,6 +15,9 @@ public class WordComb implements Comparable<WordComb>{
 //	LinkedList<Character>[] addedSegmentLetters;
 	TreeSet<PriorityLetterHolder> segments;
 	PriorityLetterHolder bestPriority;
+	double penalty = 1.0;
+	
+	final String word;
 
 	public WordComb(SwypeData swypeData, Turn[] turns){
 		this.data = swypeData;
@@ -32,41 +35,40 @@ public class WordComb implements Comparable<WordComb>{
 		populateSegments();	
 		
 		updateBestPriority();
+		
+		this.word = getNextWord();
 		//while(r());
 	}
 	
-	public WordComb(PriorityLetterHolder[] turnLetters, TreeSet<PriorityLetterHolder> segments){
+	private WordComb(PriorityLetterHolder[] turnLetters, TreeSet<PriorityLetterHolder> segments, double penalty, String word){
+		this.word = word;
 		this.turnLetters=turnLetters;
 		this.segments=segments;
 //		this.addedSegmentLetters = addedSegmentLetters;
 		bestPriority = turnLetters[0];
 		updateBestPriority();
-		String s = getCurrentWord();
-		if(segments.contains(bestPriority)){
-			segments.remove(bestPriority);
-			bestPriority.pollNextLetter();
-			segments.add(bestPriority);
-		} else {
-			bestPriority.pollNextLetter();
-		}
 		
-		s = getCurrentWord();
+		
+		this.penalty = penalty;
+		
 	}
 	
-	public String getCurrentWord(){
+	public String getNextWord(){
 		StringBuilder sb = new StringBuilder();
+		Iterator<PriorityLetterHolder> it = segments.iterator();
 		for(int i = 0; i < turnLetters.length; i++){
 			sb.append(turnLetters[i].peekNextLetter());
 			
 			if(i+1 == turnLetters.length)
 				break;
-			Iterator<PriorityLetterHolder> it = segments.iterator();
-			while(it.hasNext()){
-				PriorityLetterHolder p = it.next();
-				if(p.peekNextLetter() != ' ')
-					sb.append(p.peekNextLetter());
 
-			}
+			PriorityLetterHolder p = it.next();
+			
+			if(p.peekNextLetter() != ' ')
+				sb.append(p.peekNextLetter());
+			else
+				sb.append('-');
+			
 		}
 		//System.out.println(sb.toString());
 		return sb.toString();
@@ -86,7 +88,12 @@ public class WordComb implements Comparable<WordComb>{
 
 	private void populateSegments(){
 		for(int i = 0; i < turns.length-1; i++){
-			segments.add(populateSegment(i));
+			PriorityLetterHolder p = populateSegment(i);
+			
+			if(segments.contains(p))
+				System.out.println("ERROR :/");
+			else 
+				segments.add(p);
 		}
 	}
 	
@@ -125,18 +132,27 @@ public class WordComb implements Comparable<WordComb>{
 	
 	@SuppressWarnings("unchecked")
 	public WordComb nextPerm() {
-		String s = getCurrentWord();
-		return new WordComb((PriorityLetterHolder[])ObjectCopy.copy(turnLetters), (TreeSet<PriorityLetterHolder>)ObjectCopy.copy(segments));
+		
+		if(bestPriority.segmentIndex != -1){
+			segments.remove(bestPriority);
+			bestPriority.pollNextLetter();
+			segments.add(bestPriority);
+			
+			return new WordComb((PriorityLetterHolder[])ObjectCopy.copy(turnLetters), (TreeSet<PriorityLetterHolder>)ObjectCopy.copy(segments), penalty*1.2, getNextWord());
+		} else {
+			bestPriority.pollNextLetter();
+			return new WordComb((PriorityLetterHolder[])ObjectCopy.copy(turnLetters), (TreeSet<PriorityLetterHolder>)ObjectCopy.copy(segments), penalty, getNextWord());
+		}
 	}
 	
 	public double priority() {
 		updateBestPriority();
-		return bestPriority.peekNextPriority();
+		return bestPriority.peekNextPriority() * penalty;
 	}
 	
 	@Override
 	public int compareTo(WordComb o) {
-		return  priority() < o.priority()? 1:-1;
+		return  priority() < o.priority()? -1:1;
 	}
 
 }

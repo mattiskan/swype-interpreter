@@ -18,12 +18,12 @@ public class PriorityLetterHolder implements Comparable<PriorityLetterHolder>, S
 		}
 		
 		this.segmentIndex = segmentIndex;
-		if(segmentIndex != -1){
-			letters[0] = new Letter(' ', 300.0);
-			Arrays.sort(letters, 1, letters.length-1);
-		} else {
-			letters[0] = new Letter(' ', -1);
+		if(segmentIndex == -1){
+			letters[0] = new Letter('¤', -1);
 			Arrays.sort(letters);
+		} else {
+			Arrays.sort(letters, 1, letters.length);
+			letters[0] = new Letter(' ', letters[1].priority);
 		}		
 	}
 	
@@ -35,12 +35,17 @@ public class PriorityLetterHolder implements Comparable<PriorityLetterHolder>, S
 	}
 	
 	public char pollNextLetter(){
+		System.out.println("POLL!");
 		if(i == letters.length)
 			return '\0';
 		return letters[i++].character;
 	}
 	
+	
 	public char peekNextLetter(){
+		if(letters[i].character == '¤')
+			throw new NullPointerException("¤");
+		
 		if(i == letters.length)
 			return '\0';
 		return letters[i].character;
@@ -60,12 +65,17 @@ public class PriorityLetterHolder implements Comparable<PriorityLetterHolder>, S
 		}
 		@Override
 		public int compareTo(Letter o) {
+			if(this == o)
+				return 0;
+			
 			return this.priority < o.priority? 1: -1;
 		}
 	}
 
 	@Override
 	public int compareTo(PriorityLetterHolder o) {
+		if(this == o)
+			return 0;
 		return peekNextPriority() < o.peekNextPriority()? 1 : -1;
 	}
 }
