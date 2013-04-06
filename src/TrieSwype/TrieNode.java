@@ -1,7 +1,9 @@
 package TrieSwype;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.regex.Pattern;
 
 class TrieNode implements Iterable<TrieNode> {
 	char c;
@@ -47,7 +49,7 @@ class TrieNode implements Iterable<TrieNode> {
 	public TrieNode getChild(char letter) {
 		return children[letter-'a'];
 	}
-	
+
 	private void addWord(int letter, String word) {
 		char cc = word.charAt(letter);
 		TrieNode node = children[cc-'a'];
@@ -56,6 +58,8 @@ class TrieNode implements Iterable<TrieNode> {
 			node = new TrieNode(cc, lastLetter ? word : null);
 			children[cc-'a'] = node;
 			available.add(node);
+		} else if (lastLetter) {
+			node.word = word;
 		}
 		if (!lastLetter)
 			node.addWord(letter+1, word);
@@ -63,5 +67,20 @@ class TrieNode implements Iterable<TrieNode> {
 	
 	public Iterator<TrieNode> iterator() {
 		return available.iterator();
+	}
+	public boolean checkWord(String word) {
+		TrieNode next =children[word.charAt(0)-'a'];
+		if (next==null)
+			return false;
+		return next.checkWord(word, 0);
+	}
+	
+	private boolean checkWord(String cWord, int pos) {
+		if (pos==cWord.length()-1)
+			return cWord.equals(word);
+		TrieNode next =children[cWord.charAt(pos+1)-'a'];
+		if (next==null)
+			return false;
+		return next.checkWord(cWord, pos+1);
 	}
 }
