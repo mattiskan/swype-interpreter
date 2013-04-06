@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 import Util.CharacterMap;
 
-public class PriorityLetterHolder implements Serializable{
+public class PriorityLetterHolder implements Comparable<PriorityLetterHolder>, Serializable{
 	
 	Letter[] letters = new Letter[30];
 	int i = 0;
@@ -62,5 +62,10 @@ public class PriorityLetterHolder implements Serializable{
 		public int compareTo(Letter o) {
 			return this.priority < o.priority? 1: -1;
 		}
+	}
+
+	@Override
+	public int compareTo(PriorityLetterHolder o) {
+		return peekNextPriority() < o.peekNextPriority()? 1 : -1;
 	}
 }

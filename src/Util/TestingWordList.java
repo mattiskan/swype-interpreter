@@ -13,6 +13,7 @@ public class TestingWordList {
 			add("axel");
 			add("mat");
 			add("sol");
+			add("sadism");
 		} };
 	}
 	public static boolean contains(String word){

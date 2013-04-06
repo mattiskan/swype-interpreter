@@ -31,12 +31,24 @@ public class Interpreter {
 				
 		WordComb current = new WordComb(curve.curveData, curve.getTurns());
 		while(!TestingWordList.contains(current.getCurrentWord())){
+			vardump();
 			executionOrder.add(current.nextPerm());
 			executionOrder.add(current);
 			current = executionOrder.poll();
 			sc.next();
 		}
 		System.out.println("Found word: " + current.getCurrentWord());
+	}
+	
+	private void vardump(){
+		int i = 0;
+		PriorityQueue<WordComb> temp = new PriorityQueue<WordComb>();
+		while (!executionOrder.isEmpty()) {
+			WordComb wc =  executionOrder.poll();
+			System.out.println(i++ + ": "+ wc.getCurrentWord() + " - " + wc.priority());
+			temp.add(wc);
+		}
+		executionOrder = temp;
 	}
 }
 

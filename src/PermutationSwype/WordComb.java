@@ -25,13 +25,7 @@ public class WordComb implements Comparable<WordComb>{
 //			addedSegmentLetters[i] = new LinkedList<Character>();
 //		}
 		
-		segments =  new TreeSet<PriorityLetterHolder>(new Comparator<PriorityLetterHolder>() {
-				@Override
-				public int compare(PriorityLetterHolder o1, PriorityLetterHolder o2) {
-					return o1.peekNextPriority() < o2.peekNextPriority()? -1 : 1;
-				}
-			}
-		);
+		segments =  new TreeSet<PriorityLetterHolder>();
 		
 		populateTurnLetters();
 		bestPriority = turnLetters[0];
@@ -47,8 +41,16 @@ public class WordComb implements Comparable<WordComb>{
 //		this.addedSegmentLetters = addedSegmentLetters;
 		bestPriority = turnLetters[0];
 		updateBestPriority();
-		int i = bestPriority.segmentIndex;
-		bestPriority.pollNextLetter();
+		String s = getCurrentWord();
+		if(segments.contains(bestPriority)){
+			segments.remove(bestPriority);
+			bestPriority.pollNextLetter();
+			segments.add(bestPriority);
+		} else {
+			bestPriority.pollNextLetter();
+		}
+		
+		s = getCurrentWord();
 	}
 	
 	public String getCurrentWord(){
@@ -58,12 +60,15 @@ public class WordComb implements Comparable<WordComb>{
 			
 			if(i+1 == turnLetters.length)
 				break;
-			for(PriorityLetterHolder p : segments){
+			Iterator<PriorityLetterHolder> it = segments.iterator();
+			while(it.hasNext()){
+				PriorityLetterHolder p = it.next();
 				if(p.peekNextLetter() != ' ')
 					sb.append(p.peekNextLetter());
+
 			}
 		}
-		System.out.println(sb.toString());
+		//System.out.println(sb.toString());
 		return sb.toString();
 	}
 	
@@ -118,15 +123,20 @@ public class WordComb implements Comparable<WordComb>{
 		return data.getPoint(pointIndex) != data.getPoint(turns[nextTurnIndex].index);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public WordComb nextPerm() {
+		String s = getCurrentWord();
 		return new WordComb((PriorityLetterHolder[])ObjectCopy.copy(turnLetters), (TreeSet<PriorityLetterHolder>)ObjectCopy.copy(segments));
+	}
+	
+	public double priority() {
+		updateBestPriority();
+		return bestPriority.peekNextPriority();
 	}
 	
 	@Override
 	public int compareTo(WordComb o) {
-		updateBestPriority();
-		o.updateBestPriority();
-		return bestPriority.peekNextPriority() < o.bestPriority.peekNextPriority()? -1:1;
+		return  priority() < o.priority()? 1:-1;
 	}
 
 }
