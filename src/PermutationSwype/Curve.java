@@ -53,6 +53,7 @@ public class Curve {
 		int c = getNextPoint(a, b);
 		
 		turns.add(new Turn(0, curveData, 0));
+		graphics.markPoint(curveData.getPoint(0));
 		
 		while(c != -1){
 			double angle = calcAngle(a, b, c);
@@ -70,6 +71,7 @@ public class Curve {
 		}
 		
 		turns.add(new Turn(curveData.size()-1, curveData, 0));
+		graphics.markPoint(curveData.getPoint(curveData.size()-1));
 	}
 	
 	private int improveTurn(int a, int b, int c){

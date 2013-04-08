@@ -23,20 +23,56 @@ public class Interpreter {
 	private static final double MAX_DISTANCE = 80.0;
 	
 	
-	
+	private final static double NOT_FOUND = -1;
 	public static void main(String[] args) {
 		File[] dir = new File("files").listFiles(new FileFilter() {
 			@Override
 			public boolean accept(File pathname) {
-				return pathname.getName().endsWith(".json");
+				return pathname.getName().endsWith("0.json");
 			}
 		});
-		Interpreter inter = new Interpreter("files/ordlista.txt");
+		Interpreter inter = new Interpreter("files/ordlista-stor.txt");
 		for(File file : dir){
-			System.out.println("\n"+file.getPath());
-			inter.Interpret(file, false);
+			//System.out.println("\n"+file.getPath());
+			Map<Double, String> result = inter.Interpret(file, false);
+
+			String realWord = inter.data.getWord();
+			
+			double realWordValue = -1;
+			double failWordValue = -1;
+			String failWord = null;
+			http://mattiskan.se
+			for (Map.Entry<Double, String> entry : result.entrySet()) {
+				if (entry.getValue().equals(realWord)) {
+					realWordValue = entry.getKey();
+				} else if(failWord==null) {
+					failWord = entry.getValue();
+					failWordValue = entry.getKey();
+				}
+				if (realWordValue != NOT_FOUND  && failWordValue != NOT_FOUND){
+					break;
+				}
+			}
+			
+			if(realWordValue == NOT_FOUND && !inter.trie.checkWord(realWord)){
+				continue;
+			}
+			
+			
+			if (realWordValue != NOT_FOUND  && failWordValue != NOT_FOUND) {
+				double kvot = realWordValue/failWordValue;
+				System.out.printf("%-25s %2.5f   %s\n", realWord+":", kvot, (kvot<1)?"PASS": "FAILED: "+ failWord);
+			} else if (realWordValue == NOT_FOUND  && failWordValue == NOT_FOUND) {
+				System.out.printf("%-25s%11s%s\n", realWord+":", "",  "FAILED: not found");
+			} else if (realWordValue == NOT_FOUND) {
+				System.out.printf("%-25s%11s%s%s\n", realWord+":","",  "FAILED:", failWord);
+			} else {
+				System.out.printf("%-25s%11s%s\n", realWord+":", "", "PASS");
+			}
 		}
 	}
+	
+	
 	SwypePoint[] curveData;
 	SwypeFrame graphics;
 	SwypeData data;
@@ -50,9 +86,6 @@ public class Interpreter {
 		curveData = data.getPoints();
 		if (showGraphics) {
 			graphics = new SwypeFrame(swypeFile);
-			for (Point2D p : toCord.values()) {
-				graphics.markPoint(p);
-			}
 		}
 		findWord();
 		optimizeWords();
@@ -62,11 +95,11 @@ public class Interpreter {
 			sortedWords.put(entry.getValue(), entry.getKey());
 		}
 		int counter = 0;
-		for (Map.Entry<Double, String> entry : sortedWords.entrySet()) {
+		/*for (Map.Entry<Double, String> entry : sortedWords.entrySet()) {
 			System.out.println(entry.getValue()+" "+entry.getKey());
 			if (counter++>20)
 				break;			
-		}
+		}*/
 		if (showGraphics)
 			graphics.setVisible(true);
 		return sortedWords;
@@ -106,7 +139,17 @@ public class Interpreter {
 					letterPos[x] = curveData[i];
 					letterIndex[x] = i;
 				}
-				if (x==0 || bestDis<MAX_DISTANCE && dis2<=dis1)
+				if (c==c2 && x+2 < word.length()) {
+					char c3  = word.charAt(x+2);
+					double dis3 = curveData[i].distance(toCord.get(c3));
+					if (x==0 || bestDis<MAX_DISTANCE && dis3<=dis1) {
+						letterPos[x+1] = letterPos[x];
+						letterIndex[x+1] = letterIndex[x];
+						total += bestDis;
+						x++;
+						break;
+					}
+				} else if (x==0 || bestDis<MAX_DISTANCE && dis2<=dis1)
 					break;
 			}
 			total += bestDis;
