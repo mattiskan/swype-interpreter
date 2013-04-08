@@ -50,7 +50,7 @@ public class Interpreter {
 	}};
 	Map<Character, Point2D> letterCord = new HashMap<Character, Point2D>();
 
-	private static final double MAX_DISTANCE = 100.0;
+	private static final double MAX_DISTANCE = 80.0;
 	
 	
 	private static final String[] WORD_LIST = {
@@ -104,7 +104,7 @@ public class Interpreter {
 		int counter = 0;
 		for (Map.Entry<Double, String> entry : sortedWords.entrySet()) {
 			System.out.println(entry.getValue()+" "+entry.getKey());
-			if (counter++>2)
+			if (counter++>20)
 				break;			
 		}
 		graphics.setVisible(true);		
@@ -139,20 +139,21 @@ public class Interpreter {
 				double dis1 = curveData[i].distance(letterCord.get(c));
 				double dis2 = curveData[i].distance(letterCord.get(c2));
 				//System.out.printf("1:%f 2:%f b:%f c1:%s c2:%s\n", dis1, dis2, bestDis, c, c2);
-
+				if (word.equals("mattis"))
+					System.out.print(" ("+c+","+i+","+curveData.length+") ");
 				if (dis1<bestDis) {
 					bestDis = dis1;
 					letterPos[x] = curveData[i];
 					letterIndex[x] = i;
 					//System.out.println(c);
 				}
-				if (bestDis<MAX_DISTANCE && dis2<dis1)
+				if (x==0 || bestDis<MAX_DISTANCE && dis2<=dis1)
 					break;
 			}
 			total += bestDis;
 		}
 		double bestDis = Integer.MAX_VALUE;
-		for (i=curveData.length-10;i<curveData.length; i++) {
+		for (i=curveData.length-1;i<curveData.length; i++) {
 			char c= word.charAt(word.length()-1);
 			double dis1 = curveData[i].distance(letterCord.get(c));
 			if (dis1<bestDis) {
@@ -173,14 +174,17 @@ public class Interpreter {
 	}
 	
 	private double checkDistance(String word, Point2D[] letterPos, int[] letterIndex) {
+
 		double error = 0;
 		for (int i=1; i<word.length();i++) {
 			double lineDist = data.linearDist(letterIndex[i-1], letterIndex[i]);
 			double curvDist = data.curveDist(letterIndex[i-1], letterIndex[i]);
-			if (curvDist>1.2*lineDist) {
+			if (curvDist>1.2*lineDist && lineDist>5) {
 				error += curvDist/(1.2*lineDist);
 			}
 		}
+		if (word.equals("mattis"))
+			System.out.println("Mattis error:"+error);
 		error /= word.length();
 		return error*MAX_DISTANCE;
 	}

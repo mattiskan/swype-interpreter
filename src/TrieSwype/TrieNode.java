@@ -44,7 +44,12 @@ class TrieNode implements Iterable<TrieNode> {
 	}
 	
 	public boolean hasChild(char letter) {
-		return children[letter-'a']!=null;
+		try {
+			return children[letter-'a']!=null;
+		} catch (ArrayIndexOutOfBoundsException e) {
+			System.out.println(letter);
+			return false;
+		}
 	}
 	public TrieNode getChild(char letter) {
 		return children[letter-'a'];
