@@ -209,7 +209,7 @@ public class WordComb implements Comparable<WordComb>{
 			return result;
 		}
 	}
-	
+	g
 	public double priority() {
 		updateBestPriority();
 		return bestPriorityValue * penalty;
