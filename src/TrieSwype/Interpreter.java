@@ -1,6 +1,7 @@
 package TrieSwype;
 
 import java.awt.geom.Point2D;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -11,59 +12,17 @@ import java.text.Normalizer;
 import java.util.*;
 import java.util.regex.Pattern;
 
+
 import PermutationSwype.Curve;
 import SwypeFrame.*;
 
+import static Util.CharacterMap.*;
+
 public class Interpreter {
 	TrieNode trie = new TrieNode();
-	private final static int X_REL = -190;
-	Map<Point2D, Character> cordLetter = new HashMap<Point2D, Character>() { {
-		put(new Point2D.Double(34.0,  434.5+X_REL), 'q'); 
-		put(new Point2D.Double(110.0, 434.5+X_REL), 'w'); 
-		put(new Point2D.Double(182.0, 434.5+X_REL), 'e'); 
-		put(new Point2D.Double(254.0, 434.5+X_REL), 'r'); 
-		put(new Point2D.Double(326.0, 434.5+X_REL), 't'); 
-		put(new Point2D.Double(398.0, 434.5+X_REL), 'y'); 
-		put(new Point2D.Double(470.0, 434.5+X_REL), 'u'); 
-		put(new Point2D.Double(542.0, 434.5+X_REL), 'i'); 
-		put(new Point2D.Double(614.0, 434.5+X_REL), 'o'); 
-		put(new Point2D.Double(686.0, 434.5+X_REL), 'p'); 
-		put(new Point2D.Double(758.0, 434.5+X_REL), 'å'); 
-		put(new Point2D.Double(34.0,  527.5+X_REL), 'a'); 
-		put(new Point2D.Double(110.0, 527.5+X_REL), 's'); 
-		put(new Point2D.Double(182.0, 527.5+X_REL), 'd'); 
-		put(new Point2D.Double(254.0, 527.5+X_REL), 'f'); 
-		put(new Point2D.Double(326.0, 527.5+X_REL), 'g'); 
-		put(new Point2D.Double(398.0, 527.5+X_REL), 'h'); 
-		put(new Point2D.Double(470.0, 527.5+X_REL), 'j'); 
-		put(new Point2D.Double(542.0, 527.5+X_REL), 'k'); 
-		put(new Point2D.Double(614.0, 527.5+X_REL), 'l'); 
-		put(new Point2D.Double(686.0, 527.5+X_REL), 'ö'); 
-		put(new Point2D.Double(758.0, 527.5+X_REL), 'ä'); 
-		put(new Point2D.Double(110.0,  620.5+X_REL), 'z'); 
-		put(new Point2D.Double(182.0, 620.5+X_REL), 'x'); 
-		put(new Point2D.Double(254.0, 620.5+X_REL), 'c'); 
-		put(new Point2D.Double(326.0, 620.5+X_REL), 'v'); 
-		put(new Point2D.Double(398.0, 620.5+X_REL), 'b'); 
-		put(new Point2D.Double(470.0, 620.5+X_REL), 'n'); 
-		put(new Point2D.Double(542.0, 620.5+X_REL), 'm'); 
-	}};
-	Map<Character, Point2D> letterCord = new HashMap<Character, Point2D>();
-
 	private static final double MAX_DISTANCE = 80.0;
 	
 	
-	private static final String[] WORD_LIST = {
-		"ramp",
-		"axel",
-		"mat",
-		"sol",
-		"hem",
-		"het",
-		"ras",
-		"ramsa",
-		"mattis"
-	};
 	
 	public static void main(String[] args) {
 		File[] dir = new File("files").listFiles(new FileFilter() {
@@ -72,27 +31,28 @@ public class Interpreter {
 				return pathname.getName().endsWith(".json");
 			}
 		});
+		Interpreter inter = new Interpreter("files/ordlista.txt");
 		for(File file : dir){
 			System.out.println("\n"+file.getPath());
-			new Interpreter(file);
+			inter.Interpret(file, false);
 		}
-		//System.exit(0);
 	}
 	SwypePoint[] curveData;
 	SwypeFrame graphics;
 	SwypeData data;
-	public Interpreter(File wordFile) {
-		for (Map.Entry<Point2D, Character> entry : cordLetter.entrySet()) {
-			letterCord.put(entry.getValue(), entry.getKey());
-		}
-		addWordList();
-		
-		data = new SwypeData(wordFile);
+	public Interpreter(String wordListFile) {
+		addWordList(wordListFile);
+	
+	}
+	
+	public Map<Double, String> Interpret(File swypeFile, boolean showGraphics) {
+		data = new SwypeData(swypeFile);
 		curveData = data.getPoints();
-		
-		graphics = new SwypeFrame(wordFile);
-		for (Point2D p : letterCord.values()) {
-			graphics.markPoint(p);
+		if (showGraphics) {
+			graphics = new SwypeFrame(swypeFile);
+			for (Point2D p : toCord.values()) {
+				graphics.markPoint(p);
+			}
 		}
 		findWord();
 		optimizeWords();
@@ -107,8 +67,11 @@ public class Interpreter {
 			if (counter++>20)
 				break;			
 		}
-		graphics.setVisible(true);		
+		if (showGraphics)
+			graphics.setVisible(true);
+		return sortedWords;
 	}
+	
 	HashMap<String, Double> words;
 	private void findWord() {
 		words = new HashMap<String, Double>();
@@ -136,16 +99,12 @@ public class Interpreter {
 			char c2  = word.charAt(x+1);
 			double bestDis = Integer.MAX_VALUE;
 			for (; i<curveData.length; i++) {
-				double dis1 = curveData[i].distance(letterCord.get(c));
-				double dis2 = curveData[i].distance(letterCord.get(c2));
-				//System.out.printf("1:%f 2:%f b:%f c1:%s c2:%s\n", dis1, dis2, bestDis, c, c2);
-				if (word.equals("mattis"))
-					System.out.print(" ("+c+","+i+","+curveData.length+") ");
+				double dis1 = curveData[i].distance(toCord.get(c));
+				double dis2 = curveData[i].distance(toCord.get(c2));
 				if (dis1<bestDis) {
 					bestDis = dis1;
 					letterPos[x] = curveData[i];
 					letterIndex[x] = i;
-					//System.out.println(c);
 				}
 				if (x==0 || bestDis<MAX_DISTANCE && dis2<=dis1)
 					break;
@@ -155,7 +114,7 @@ public class Interpreter {
 		double bestDis = Integer.MAX_VALUE;
 		for (i=curveData.length-1;i<curveData.length; i++) {
 			char c= word.charAt(word.length()-1);
-			double dis1 = curveData[i].distance(letterCord.get(c));
+			double dis1 = curveData[i].distance(toCord.get(c));
 			if (dis1<bestDis) {
 				bestDis = dis1;
 				letterPos[word.length()-1] = curveData[i];
@@ -167,7 +126,6 @@ public class Interpreter {
 				total += 10000;
 				break;
 			}
-			//graphics.markPoint(letterPos[i], word.charAt(i));
 		}
 		total += checkDistance(word, letterPos, letterIndex);
 		return (total+bestDis)/word.length();
@@ -183,15 +141,13 @@ public class Interpreter {
 				error += curvDist/(1.2*lineDist);
 			}
 		}
-		if (word.equals("mattis"))
-			System.out.println("Mattis error:"+error);
 		error /= word.length();
 		return error*MAX_DISTANCE;
 	}
 	
 	
 	private void findWord(TrieNode cNode, int index, int letterIndex, double value) {
-		Point2D lPoint = letterCord.get(cNode.getChar());
+		Point2D lPoint = toCord.get(cNode.getChar());
 		if (cNode.hasWord()) {
 			if (curveData[curveData.length-1].distance(lPoint)<MAX_DISTANCE) {
 				words.put(cNode.getWord(), value/(letterIndex+1));
@@ -221,17 +177,14 @@ public class Interpreter {
 	}
 	public boolean checkNormalChar(String str) {
 		for (int i=0; i<str.length(); i++) {
-			if (str.charAt(i)<'a' || str.charAt(i)>'z')
+			if ("qwertyuiopåasdfghjklöäzxcvbnm".indexOf(str.charAt(i))==-1)
 				return false;
 		}
 	    return true; 
 	}
-	public void addWordList() {
-		for (String word : WORD_LIST) {
-			trie.addWord(word);
-		}
+	public void addWordList(String wordListFile) {
 		try {
-			BufferedReader in = new BufferedReader(new FileReader("files/ordlista.txt"));
+			BufferedReader in = new BufferedReader(new FileReader(wordListFile));
 			String line = null;
 			while ((line = in.readLine())!=null) {
 				if (checkNormalChar(line)) {
@@ -239,13 +192,14 @@ public class Interpreter {
 				}
 			}
 		} catch (Exception e) {
+			System.err.println("Error when reading:");
 			e.printStackTrace();
 		}
 	}
 	
 	public List<LetterPriority> findFirstLetter() {
 		ArrayList<LetterPriority> letters = new ArrayList<LetterPriority>();
-		for (Map.Entry<Point2D, Character> entry : cordLetter.entrySet()) {
+		for (Map.Entry<Point2D, Character> entry : toLetter.entrySet()) {
 			LetterPriority lp = new LetterPriority(entry.getValue(), entry.getKey().distance(curveData[0]));
 			if (lp.priority<MAX_DISTANCE)
 				letters.add(lp);
