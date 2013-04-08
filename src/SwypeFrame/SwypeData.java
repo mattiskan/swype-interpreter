@@ -1,6 +1,7 @@
 package SwypeFrame;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 
 import com.google.gson.*;
@@ -14,7 +15,7 @@ public class SwypeData implements Iterable<SwypePoint> {
 	public SwypeData(File f)  {
 		try {
 			JsonParser parser = new JsonParser();
-			JsonReader reader = new JsonReader(new InputStreamReader(new BufferedInputStream(new FileInputStream(f))));
+			JsonReader reader = new JsonReader(new InputStreamReader(new BufferedInputStream(new FileInputStream(f)), Charset.forName("ISO-8859-1")));
 			JsonObject container = parser.parse(reader).getAsJsonObject();
 			word = container.get("word").getAsString();
 			JsonArray pointArray = container.get("data").getAsJsonArray();
