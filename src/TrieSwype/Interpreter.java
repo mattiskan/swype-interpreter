@@ -86,12 +86,9 @@ public class Interpreter {
 			letterCord.put(entry.getValue(), entry.getKey());
 		}
 		addWordList();
-		try {
-			data = new SwypeData(wordFile);
-			curveData = data.getPoints();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		
+		data = new SwypeData(wordFile);
+		curveData = data.getPoints();
 		
 		graphics = new SwypeFrame(wordFile);
 		for (Point2D p : letterCord.values()) {

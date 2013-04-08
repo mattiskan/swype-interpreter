@@ -12,6 +12,12 @@ public class SwypePoint extends Point2D {
 		this.y = y;
 		this.time = time;
 	}
+	
+	public SwypePoint(SwypePoint point) {
+		this.x = point.x;
+		this.y = point.y;
+		this.time = point.time;
+	}
 	@Override
 	public double getX() {
 		// TODO Auto-generated method stub

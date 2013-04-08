@@ -11,24 +11,28 @@ public class SwypeData implements Iterable<SwypePoint> {
 	private SwypePoint[] points;
 	private double[] distances;
 	
-	public SwypeData(File f) throws IOException {
-		JsonParser parser = new JsonParser();
-		JsonReader reader = new JsonReader(new InputStreamReader(new BufferedInputStream(new FileInputStream(f))));
-		JsonObject container = parser.parse(reader).getAsJsonObject();
-		word = container.get("word").getAsString();
-		JsonArray pointArray = container.get("data").getAsJsonArray();
-		points = new SwypePoint[pointArray.size()];
-		distances = new double[pointArray.size()];
-		for (int i=0; i<pointArray.size(); i++) {
-			JsonObject p = pointArray.get(i).getAsJsonObject();
-			double x = p.get("x").getAsDouble();
-			double y = p.get("y").getAsDouble();
-			long time = p.get("time").getAsLong();
-			points[i] = new SwypePoint(x, y, time);
-			if(i != 0){
-				distances[i] = distances[i-1] + points[i-1].distance(points[i]);
-				//System.out.println("Distance:" + distances[i]);
+	public SwypeData(File f)  {
+		try {
+			JsonParser parser = new JsonParser();
+			JsonReader reader = new JsonReader(new InputStreamReader(new BufferedInputStream(new FileInputStream(f))));
+			JsonObject container = parser.parse(reader).getAsJsonObject();
+			word = container.get("word").getAsString();
+			JsonArray pointArray = container.get("data").getAsJsonArray();
+			points = new SwypePoint[pointArray.size()];
+			distances = new double[pointArray.size()];
+			for (int i=0; i<pointArray.size(); i++) {
+				JsonObject p = pointArray.get(i).getAsJsonObject();
+				double x = p.get("x").getAsDouble();
+				double y = p.get("y").getAsDouble();
+				long time = p.get("time").getAsLong();
+				points[i] = new SwypePoint(x, y, time);
+				if(i != 0){
+					distances[i] = distances[i-1] + points[i-1].distance(points[i]);
+					//System.out.println("Distance:" + distances[i]);
+				}
 			}
+		} catch( IOException e){
+			e.printStackTrace();
 		}
 	}
 	
