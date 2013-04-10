@@ -14,65 +14,18 @@ import java.util.regex.Pattern;
 
 
 import PermutationSwype.Curve;
+import PermutationSwype.Turn;
 import SwypeFrame.*;
 
 import static Util.CharacterMap.*;
 
 public class Interpreter {
 	TrieNode trie = new TrieNode();
-	private static final double MAX_DISTANCE = 80.0;
+	//private static final double MAX_DISTANCE = 80.0;
+	TestConfig config;
 	
-	
-	private final static double NOT_FOUND = -1;
-	public static void main(String[] args) {
-		File[] dir = new File("files").listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File pathname) {
-				return pathname.getName().endsWith("0.json");
-			}
-		});
-		Interpreter inter = new Interpreter("files/ordlista-stor.txt");
-		for(File file : dir){
-			//System.out.println("\n"+file.getPath());
-			Map<Double, String> result = inter.Interpret(file, false);
 
-			String realWord = inter.data.getWord();
-			
-			double realWordValue = -1;
-			double failWordValue = -1;
-			String failWord = null;
-			http://mattiskan.se
-			for (Map.Entry<Double, String> entry : result.entrySet()) {
-				if (entry.getValue().equals(realWord)) {
-					realWordValue = entry.getKey();
-				} else if(failWord==null) {
-					failWord = entry.getValue();
-					failWordValue = entry.getKey();
-				}
-				if (realWordValue != NOT_FOUND  && failWordValue != NOT_FOUND){
-					break;
-				}
-			}
-			
-			if(realWordValue == NOT_FOUND && !inter.trie.checkWord(realWord)){
-				continue;
-			}
-			
-			
-			if (realWordValue != NOT_FOUND  && failWordValue != NOT_FOUND) {
-				double kvot = realWordValue/failWordValue;
-				System.out.printf("%-25s %2.5f   %s\n", realWord+":", kvot, (kvot<1)?"PASS": "FAILED: "+ failWord);
-			} else if (realWordValue == NOT_FOUND  && failWordValue == NOT_FOUND) {
-				System.out.printf("%-25s%11s%s\n", realWord+":", "",  "FAILED: not found");
-			} else if (realWordValue == NOT_FOUND) {
-				System.out.printf("%-25s%11s%s%s\n", realWord+":","",  "FAILED:", failWord);
-			} else {
-				System.out.printf("%-25s%11s%s\n", realWord+":", "", "PASS");
-			}
-		}
-	}
-	
-	
+	//boolean showGraphics;
 	SwypePoint[] curveData;
 	SwypeFrame graphics;
 	SwypeData data;
@@ -81,10 +34,11 @@ public class Interpreter {
 	
 	}
 	
-	public Map<Double, String> Interpret(File swypeFile, boolean showGraphics) {
+	public Map<Double, String> Interpret(File swypeFile, TestConfig config) {
+		this.config = config;
 		data = new SwypeData(swypeFile);
 		curveData = data.getPoints();
-		if (showGraphics) {
+		if (config.showGraphics) {
 			graphics = new SwypeFrame(swypeFile);
 		}
 		findWord();
@@ -100,7 +54,7 @@ public class Interpreter {
 			if (counter++>20)
 				break;			
 		}*/
-		if (showGraphics)
+		if (config.showGraphics)
 			graphics.setVisible(true);
 		return sortedWords;
 	}
@@ -127,6 +81,7 @@ public class Interpreter {
 		Point2D[] letterPos = new Point2D[word.length()];
 		int[] letterIndex = new int[word.length()];
 		int i=0;
+		double lastBestDist = 0;
 		for (int x=0; x<word.length()-1; x++) {
 			char c = word.charAt(x);
 			char c2  = word.charAt(x+1);
@@ -142,18 +97,34 @@ public class Interpreter {
 				if (c==c2 && x+2 < word.length()) {
 					char c3  = word.charAt(x+2);
 					double dis3 = curveData[i].distance(toCord.get(c3));
-					if (x==0 || bestDis<MAX_DISTANCE && dis3<=dis1) {
+					if (x==0 || bestDis<config.maxDistance && dis3<=dis1) {
 						letterPos[x+1] = letterPos[x];
 						letterIndex[x+1] = letterIndex[x];
 						total += bestDis;
 						x++;
 						break;
 					}
-				} else if (x==0 || bestDis<MAX_DISTANCE && dis2<=dis1)
+				} else if (x==0 || bestDis<config.maxDistance && dis2<=dis1)
 					break;
 			}
+			if (x>1 && word.charAt(x-1) != c) {
+				total -= lastBestDist * ((c==c2)?2:1);
+				int to = letterIndex[x-1];
+				for (int z=letterIndex[x]; z>to; z--) {
+					char c3 = word.charAt(x-1);
+					double dist1 = curveData[z].distance(toCord.get(c3));
+					if (dist1<lastBestDist) {
+						lastBestDist = dist1;
+						letterPos[x-1] = curveData[z];
+						letterIndex[x-1] = z;
+					}
+				}
+				total += lastBestDist * ((c==c2)?2:1);
+			}
+			lastBestDist = bestDis;
 			total += bestDis;
 		}
+		
 		double bestDis = Integer.MAX_VALUE;
 		for (i=curveData.length-1;i<curveData.length; i++) {
 			char c= word.charAt(word.length()-1);
@@ -168,10 +139,29 @@ public class Interpreter {
 			if (letterPos[i]==null) {
 				total += 10000;
 				break;
+			} else if (config.showGraphics && word.equals(data.getWord())) {
+				graphics.markPoint(letterPos[i], word.charAt(i));
 			}
 		}
-		total += checkDistance(word, letterPos, letterIndex);
+		if (config.curveDistance)
+			total += checkDistance(word, letterPos, letterIndex);
+		//total += findCurves(word, letterPos, letterIndex);
 		return (total+bestDis)/word.length();
+	}
+	
+	private double findCurves(String word, Point2D[] letterPos, int[] letterIndex) {
+		Curve curve = new Curve(data);
+		Turn[] turns = curve.getTurns();
+		int count = 2;
+		for (Point2D turnPoint : turns) {
+			for (Point2D lPos : letterPos) {
+				if (lPos != null && turnPoint.distance(lPos)<30) {
+					count++;
+					break;
+				}
+			}
+		}//(count/turns.length)*config.maxDistance/4+
+		return  ((word.length()-2<turns.length)?config.maxDistance/4:0);
 	}
 	
 	private double checkDistance(String word, Point2D[] letterPos, int[] letterIndex) {
@@ -185,21 +175,21 @@ public class Interpreter {
 			}
 		}
 		error /= word.length();
-		return error*MAX_DISTANCE;
+		return error*config.maxDistance;
 	}
 	
 	
 	private void findWord(TrieNode cNode, int index, int letterIndex, double value) {
 		Point2D lPoint = toCord.get(cNode.getChar());
 		if (cNode.hasWord()) {
-			if (curveData[curveData.length-1].distance(lPoint)<MAX_DISTANCE) {
+			if (curveData[curveData.length-1].distance(lPoint)<config.maxDistance) {
 				words.put(cNode.getWord(), value/(letterIndex+1));
 			}
 		}
 		int nextIndex = -1;
 		for (int i=index; i<curveData.length; i++) {
 			SwypePoint point = curveData[i];
-			if (point.distance(lPoint)<MAX_DISTANCE) {
+			if (point.distance(lPoint)<config.maxDistance) {
 				nextIndex = i;
 				break;
 			}
@@ -244,7 +234,7 @@ public class Interpreter {
 		ArrayList<LetterPriority> letters = new ArrayList<LetterPriority>();
 		for (Map.Entry<Point2D, Character> entry : toLetter.entrySet()) {
 			LetterPriority lp = new LetterPriority(entry.getValue(), entry.getKey().distance(curveData[0]));
-			if (lp.priority<MAX_DISTANCE)
+			if (lp.priority<config.maxDistance)
 				letters.add(lp);
 		}
 		Collections.sort(letters);

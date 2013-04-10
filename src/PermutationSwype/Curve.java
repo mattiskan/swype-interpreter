@@ -25,10 +25,11 @@ public class Curve {
 	SwypeFrame graphics;
 	
 	private boolean debug;
+	private boolean useGraphics;
 	
 	public Curve(File wordFile){
 		curveData = new SwypeData(wordFile);
-		
+		useGraphics = true;
 		debug = true;		
 		graphics = new SwypeFrame(wordFile);
 		
@@ -40,6 +41,7 @@ public class Curve {
 	
 	public Curve(SwypeData curveData){
 		this.curveData = curveData;
+		useGraphics = false;
 		findTurns();
 	}
 	
@@ -53,7 +55,8 @@ public class Curve {
 		int c = getNextPoint(a, b);
 		
 		turns.add(new Turn(0, curveData, 0));
-		graphics.markPoint(curveData.getPoint(0));
+		if (useGraphics)
+			graphics.markPoint(curveData.getPoint(0));
 		
 		while(c != -1){
 			double angle = calcAngle(a, b, c);
@@ -61,7 +64,8 @@ public class Curve {
 				b = improveTurn(a,b,c);
 				turns.add(new Turn(b, curveData, angle));
 				if(debug){
-					graphics.markPoint(curveData.getPoint(b));
+					if (useGraphics)
+						graphics.markPoint(curveData.getPoint(b));
 				}
 				b=nPixlesAhead(b, 30);
 			}
@@ -71,7 +75,8 @@ public class Curve {
 		}
 		
 		turns.add(new Turn(curveData.size()-1, curveData, 0));
-		graphics.markPoint(curveData.getPoint(curveData.size()-1));
+		if (useGraphics)
+			graphics.markPoint(curveData.getPoint(curveData.size()-1));
 	}
 	
 	private int improveTurn(int a, int b, int c){
