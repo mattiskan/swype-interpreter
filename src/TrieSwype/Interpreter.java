@@ -42,7 +42,8 @@ public class Interpreter {
 			graphics = new SwypeFrame(swypeFile);
 		}
 		findWord();
-		optimizeWords();
+		if (config.curveDistance || config.optimizeWords)
+			optimizeWords();
 		
 		TreeMap<Double, String> sortedWords = new TreeMap<Double, String>();
 		for (Map.Entry<String, Double> entry : words.entrySet()) {
@@ -143,10 +144,15 @@ public class Interpreter {
 				graphics.markPoint(letterPos[i], word.charAt(i));
 			}
 		}
-		if (config.curveDistance)
+		if (config.curveDistance) {
+			if (!config.optimizeWords)
+				total = 0;
 			total += checkDistance(word, letterPos, letterIndex);
+			if (!config.optimizeWords)
+				return total/word.length()/config.maxDistance;
+		}
 		//total += findCurves(word, letterPos, letterIndex);
-		return (total+bestDis)/word.length();
+		return ((total+bestDis)/word.length())/((config.curveDistance)?config.maxDistance*2:config.maxDistance);
 	}
 	
 	private double findCurves(String word, Point2D[] letterPos, int[] letterIndex) {
@@ -183,7 +189,7 @@ public class Interpreter {
 		Point2D lPoint = toCord.get(cNode.getChar());
 		if (cNode.hasWord()) {
 			if (curveData[curveData.length-1].distance(lPoint)<config.maxDistance) {
-				words.put(cNode.getWord(), value/(letterIndex+1));
+				words.put(cNode.getWord(), value/(letterIndex+1)/config.maxDistance);
 			}
 		}
 		int nextIndex = -1;

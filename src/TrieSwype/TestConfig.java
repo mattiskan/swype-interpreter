@@ -10,6 +10,7 @@ public class TestConfig {
 	String wordList = "files/ordlista-stor.txt";
 	boolean showGraphics = false;
 	String wordDir = "files";
+	String saveFile = "";
 	FileFilter fileFilter = new FileFilter() {
 		@Override
 		public boolean accept(File pathname) {
