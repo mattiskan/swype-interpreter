@@ -36,11 +36,12 @@ public class Interpreter {
 			Map<Double, String> result = inter.Interpret(file, config);
 			int i =0;
 			System.out.println(file.getName()+":");
+			System.out.println("----------------------");
 			for (Map.Entry<Double, String> entry : result.entrySet()) {
 				if(i++ >= 4){
 					break;
 				}
-				System.out.println(String.format("%-20s: %2.4f", entry.getValue(), entry.getKey()));
+				System.out.println(entry.getValue());
 			}
 			System.out.println();
 		}	
