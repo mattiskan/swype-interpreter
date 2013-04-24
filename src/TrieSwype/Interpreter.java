@@ -20,6 +20,32 @@ import SwypeFrame.*;
 import static Util.CharacterMap.*;
 
 public class Interpreter {
+	
+	public static void main(String[] args) {
+		File[] dir = new File("demofiles").listFiles(new FileFilter() {
+			@Override
+			public boolean accept(File pathname) {
+				return pathname.getName().endsWith(".json");
+			}
+		});
+		
+		Interpreter inter = new Interpreter("files/ordlista-stor.txt");
+		TestConfig config = new TestConfig();
+		for(File file : dir){
+			new Curve(file);
+			Map<Double, String> result = inter.Interpret(file, config);
+			int i =0;
+			System.out.println(file.getName()+":");
+			for (Map.Entry<Double, String> entry : result.entrySet()) {
+				if(i++ >= 4){
+					break;
+				}
+				System.out.println(String.format("%-20s: %2.4f", entry.getValue(), entry.getKey()));
+			}
+			System.out.println();
+		}	
+	}
+	
 	TrieNode trie = new TrieNode();
 	//private static final double MAX_DISTANCE = 80.0;
 	TestConfig config;

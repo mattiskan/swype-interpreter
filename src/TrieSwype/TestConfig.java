@@ -14,7 +14,7 @@ public class TestConfig {
 	FileFilter fileFilter = new FileFilter() {
 		@Override
 		public boolean accept(File pathname) {
-			return pathname.getName().endsWith("0.json");
+			return pathname.getName().endsWith(".json");
 		}
 	};
 }
